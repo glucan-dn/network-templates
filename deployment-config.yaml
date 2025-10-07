@@ -9,7 +9,7 @@ metadata:
 
 # External API endpoints
 api:
-  base_url: "http://127.0.0.1:5001"  # Update to your API
+  base_url: "https://cfedcbb61ab4.ngrok-free.app"  # Update to your API
   endpoints:
     template_updated: "/api/v1/network-templates/updated"
     health_check: "/health"
