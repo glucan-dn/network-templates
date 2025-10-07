@@ -9,14 +9,14 @@ metadata:
 
 # External API endpoints
 api:
-  base_url: "https://your-external-system.com"  # Update to your API
+  base_url: "http://127.0.0.1:5001"  # Update to your API
   endpoints:
     template_updated: "/api/v1/network-templates/updated"
     health_check: "/health"
   
   authentication:
     type: "bearer_token"
-    token_source: "secret"  # Uses DEPLOYMENT_API_TOKEN secret
+    token: "secret-token" 
 
 # Template processing rules
 templates:

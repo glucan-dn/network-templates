@@ -3,10 +3,10 @@
 
 api:
   # External API endpoint (update this to your actual API)
-  base_url: "https://your-cms-system.com"
+  base_url: "http://127.0.0.1:5001"
   endpoint: "/api/v1/network-templates/updated"
   
-  # Full URL will be: https://your-cms-system.com/api/v1/network-templates/updated
+  # Full URL will be: https://127.0.0.1:5001/api/v1/network-templates/updated
   
   # Timeout settings
   timeout: 30
@@ -17,19 +17,24 @@ api:
     Content-Type: "application/json"
     User-Agent: "network-templates-github-action/1.0"
     X-Source: "github-actions"
+  
+  # Authentication configuration
+  authentication:
+    type: "bearer_token"
+    token: "secret-token" 
 
 # Environment-specific overrides (optional)
 environments:
   production:
-    base_url: "https://prod-cms.company.com"
+    base_url: "http://127.0.0.1:5001"
     timeout: 30
   
   staging:
-    base_url: "https://staging-cms.company.com" 
+    base_url: "http://127.0.0.1:5001"
     timeout: 15
     
   development:
-    base_url: "https://dev-cms.company.com"
+    base_url: "http://127.0.0.1:5001"
     timeout: 10
 
 # Notification settings
