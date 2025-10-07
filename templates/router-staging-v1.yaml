@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: NetworkDeviceTemplate
+metadata:
+  name: cisco-router-staging-v1
+  labels:
+    device-type: router
+    vendor: cisco
+    environment: staging
+    version: "1.0"
+spec:
+  device:
+    model: "ISR4221"
+    os: "IOS-XE"
+    version: "16.09.04"
+  
+  interfaces:
+    - name: "GigabitEthernet0/0/0"
+      description: "WAN Interface - Staging"
+      ip: "192.168.100.1"
+      netmask: "255.255.255.0"
+      enabled: true
+    - name: "GigabitEthernet0/0/1"
+      description: "LAN Interface - Staging"
+      ip: "10.100.1.1"
+      netmask: "255.255.255.0"
+      enabled: true
+  
+  routing:
+    ospf:
+      process-id: 100
+      router-id: "192.168.100.1"
+      networks:
+        - network: "192.168.100.0"
+          wildcard: "0.0.0.255"
+          area: 0
+        - network: "10.100.1.0"
+          wildcard: "0.0.0.255"
+          area: 0
+  
+  security:
+    access-lists:
+      - name: "STAGING_ALLOW"
+        type: "standard"
+        rules:
+          - action: "permit"
+            source: "10.100.0.0 0.0.255.255"
+          - action: "permit"
+            source: "192.168.100.0 0.0.0.255"
+  
+  logging:
+    enabled: true
+    level: "debugging"
+    servers:
+      - "10.100.0.200"

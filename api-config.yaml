@@ -1,0 +1,39 @@
+# API Configuration for Network Templates
+# This file contains the external API endpoints and settings
+
+api:
+  # External API endpoint (update this to your actual API)
+  base_url: "https://your-cms-system.com"
+  endpoint: "/api/v1/network-templates/updated"
+  
+  # Full URL will be: https://your-cms-system.com/api/v1/network-templates/updated
+  
+  # Timeout settings
+  timeout: 30
+  retry_attempts: 3
+  
+  # Headers to include in API calls
+  headers:
+    Content-Type: "application/json"
+    User-Agent: "network-templates-github-action/1.0"
+    X-Source: "github-actions"
+
+# Environment-specific overrides (optional)
+environments:
+  production:
+    base_url: "https://prod-cms.company.com"
+    timeout: 30
+  
+  staging:
+    base_url: "https://staging-cms.company.com" 
+    timeout: 15
+    
+  development:
+    base_url: "https://dev-cms.company.com"
+    timeout: 10
+
+# Notification settings
+notifications:
+  include_diff: true
+  include_metadata: true
+  max_payload_size: "1MB"

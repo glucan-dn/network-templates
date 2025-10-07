@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://schemas.networkconfig.com/device-template/v1",
+  "title": "Network Device Template Schema",
+  "description": "Schema for validating network device configuration templates",
+  "type": "object",
+  "required": ["apiVersion", "kind", "metadata", "spec"],
+  "properties": {
+    "apiVersion": {
+      "type": "string",
+      "enum": ["v1"],
+      "description": "API version of the template format"
+    },
+    "kind": {
+      "type": "string",
+      "enum": ["NetworkDeviceTemplate"],
+      "description": "Type of configuration object"
+    },
+    "metadata": {
+      "type": "object",
+      "required": ["name", "labels"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "Unique name for the template"
+        },
+        "labels": {
+          "type": "object",
+          "required": ["device-type", "vendor", "environment", "version"],
+          "properties": {
+            "device-type": {
+              "type": "string",
+              "enum": ["router", "switch", "firewall", "load-balancer"]
+            },
+            "vendor": {
+              "type": "string",
+              "enum": ["cisco", "juniper", "arista", "fortinet", "f5"]
+            },
+            "environment": {
+              "type": "string",
+              "enum": ["production", "staging", "development", "testing"]
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+(\\.\\d+)?$"
+            }
+          },
+          "additionalProperties": true
+        }
+      }
+    },
+    "spec": {
+      "type": "object",
+      "required": ["device"],
+      "properties": {
+        "device": {
+          "type": "object",
+          "required": ["model", "os", "version"],
+          "properties": {
+            "model": {"type": "string"},
+            "os": {"type": "string"},
+            "version": {"type": "string"}
+          }
+        },
+        "interfaces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": {"type": "string"},
+              "description": {"type": "string"},
+              "type": {
+                "type": "string",
+                "enum": ["access", "trunk", "routed"]
+              },
+              "ip": {
+                "type": "string", 
+                "format": "ipv4"
+              },
+              "netmask": {
+                "type": "string",
+                "format": "ipv4"
+              },
+              "enabled": {"type": "boolean"},
+              "vlan": {"type": "integer", "minimum": 1, "maximum": 4094}
+            }
+          }
+        },
+        "routing": {
+          "type": "object",
+          "properties": {
+            "ospf": {
+              "type": "object",
+              "properties": {
+                "process-id": {"type": "integer"},
+                "router-id": {"type": "string", "format": "ipv4"},
+                "networks": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["network", "wildcard", "area"],
+                    "properties": {
+                      "network": {"type": "string"},
+                      "wildcard": {"type": "string"},
+                      "area": {"type": "integer"}
+                    }
+                  }
+                }
+              }
+            },
+            "static-routes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["destination", "netmask", "next-hop"],
+                "properties": {
+                  "destination": {"type": "string"},
+                  "netmask": {"type": "string"},
+                  "next-hop": {"type": "string"},
+                  "description": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "vlans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name"],
+            "properties": {
+              "id": {"type": "integer", "minimum": 1, "maximum": 4094},
+              "name": {"type": "string"},
+              "description": {"type": "string"}
+            }
+          }
+        },
+        "security": {
+          "type": "object",
+          "properties": {
+            "access-lists": {"type": "array"},
+            "ssh": {"type": "object"},
+            "port-security": {"type": "object"},
+            "dhcp-snooping": {"type": "object"}
+          }
+        },
+        "monitoring": {
+          "type": "object",
+          "properties": {
+            "snmp": {"type": "object"},
+            "logging": {"type": "object"}
+          }
+        }
+      }
+    }
+  }
+}

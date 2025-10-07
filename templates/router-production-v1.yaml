@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: NetworkDeviceTemplate
+metadata:
+  name: cisco-router-production-v1
+  labels:
+    device-type: router
+    vendor: cisco
+    environment: production
+    version: "1.0"
+spec:
+  device:
+    model: "ISR4331"
+    os: "IOS-XE"
+    version: "16.09.04"
+  
+  interfaces:
+    - name: "GigabitEthernet0/0/0"
+      description: "WAN Interface"
+      ip: "192.168.1.1"
+      netmask: "255.255.255.0"
+      enabled: true
+    - name: "GigabitEthernet0/0/1" 
+      description: "LAN Interface"
+      ip: "10.0.1.1"
+      netmask: "255.255.255.0"
+      enabled: true
+  
+  routing:
+    ospf:
+      process-id: 1
+      router-id: "192.168.1.1"
+      networks:
+        - network: "192.168.1.0"
+          wildcard: "0.0.0.255"
+          area: 0
+        - network: "10.0.1.0"
+          wildcard: "0.0.0.255"
+          area: 0
+    
+    static-routes:
+      - destination: "0.0.0.0"
+        netmask: "0.0.0.0"
+        next-hop: "192.168.1.254"
+        description: "Default route"
+  
+  security:
+    access-lists:
+      - name: "ALLOW_MANAGEMENT"
+        type: "standard"
+        rules:
+          - action: "permit"
+            source: "10.0.0.0 0.0.255.255"
+          - action: "deny"
+            source: "any"
+    
+    ssh:
+      enabled: true
+      version: 2
+      timeout: 300
+  
+  snmp:
+    enabled: true
+    community: "public"
+    location: "Data Center 1"
+    contact: "network-admin@company.com"
+  
+  logging:
+    enabled: true
+    level: "informational"
+    servers:
+      - "10.0.0.100"
+      - "10.0.0.101"

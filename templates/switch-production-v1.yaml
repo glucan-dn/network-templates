@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: NetworkDeviceTemplate
+metadata:
+  name: cisco-switch-production-v1
+  labels:
+    device-type: switch
+    vendor: cisco
+    environment: production
+    version: "1.0"
+spec:
+  device:
+    model: "Catalyst 9300"
+    os: "IOS-XE"
+    version: "16.12.04"
+  
+  vlans:
+    - id: 10
+      name: "PRODUCTION"
+      description: "Production network"
+    - id: 20
+      name: "STAGING"
+      description: "Staging environment"
+    - id: 30
+      name: "MANAGEMENT"
+      description: "Management network"
+    - id: 99
+      name: "NATIVE"
+      description: "Native VLAN"
+  
+  interfaces:
+    # Access ports
+    - name: "GigabitEthernet1/0/1-10"
+      type: "access"
+      vlan: 10
+      description: "Production servers"
+      port-security:
+        enabled: true
+        max-addresses: 2
+    
+    - name: "GigabitEthernet1/0/11-20"
+      type: "access"
+      vlan: 20
+      description: "Staging servers"
+    
+    # Trunk ports
+    - name: "GigabitEthernet1/0/47-48"
+      type: "trunk"
+      native-vlan: 99
+      allowed-vlans: [10, 20, 30]
+      description: "Uplink to core switches"
+  
+  spanning-tree:
+    mode: "rapid-pvst"
+    priority: 32768
+    portfast:
+      default: true
+      bpduguard: true
+  
+  management:
+    interface: "Vlan30"
+    ip: "10.0.30.10"
+    netmask: "255.255.255.0"
+    gateway: "10.0.30.1"
+  
+  security:
+    port-security:
+      violation-action: "shutdown"
+      aging-time: 1440
+    
+    dhcp-snooping:
+      enabled: true
+      trusted-ports: ["GigabitEthernet1/0/47", "GigabitEthernet1/0/48"]
+    
+    dynamic-arp-inspection:
+      enabled: true
+      vlans: [10, 20, 30]
+  
+  monitoring:
+    snmp:
+      enabled: true
+      community: "public"
+      location: "Data Center 1 - Rack A3"
+      contact: "network-admin@company.com"
+    
+    logging:
+      enabled: true
+      level: "informational"
+      servers:
+        - "10.0.30.100"

@@ -1,0 +1,66 @@
+# External API Configuration
+# This file defines how network templates trigger external API calls
+
+apiVersion: v1
+kind: ApiNotificationConfig
+metadata:
+  name: network-templates-api-config
+  description: "Configuration for external API notifications when templates change"
+
+# External API endpoints
+api:
+  base_url: "https://your-external-system.com"  # Update to your API
+  endpoints:
+    template_updated: "/api/v1/network-templates/updated"
+    health_check: "/health"
+  
+  authentication:
+    type: "bearer_token"
+    token_source: "secret"  # Uses DEPLOYMENT_API_TOKEN secret
+
+# Template processing rules
+templates:
+  # Router templates
+  - pattern: "templates/router-*.yaml"
+    metadata_extraction:
+      device_type: "router"
+      priority: "high"
+    notification_config:
+      immediate: true
+      include_diff: true
+    
+  # Switch templates  
+  - pattern: "templates/switch-*.yaml"
+    metadata_extraction:
+      device_type: "switch"
+      priority: "medium"
+    notification_config:
+      immediate: true
+      include_diff: true
+
+# Environment-specific settings
+environments:
+  production:
+    notification_required: true
+    approval_required: false  # Handled by external system
+    
+  staging:
+    notification_required: true
+    approval_required: false
+  
+  development:
+    notification_required: true
+    approval_required: false
+
+# Notification payload format
+payload_format:
+  include_fields:
+    - "repository_info"
+    - "commit_details" 
+    - "changed_files"
+    - "template_metadata"
+    - "environment_context"
+  
+  custom_fields:
+    source: "github-actions"
+    workflow: "network-template-update"

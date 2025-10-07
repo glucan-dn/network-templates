@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: NetworkDeviceTemplate
+metadata:
+  name: example-basic-router
+  labels:
+    device-type: router
+    vendor: cisco
+    environment: example
+    version: "1.0"
+spec:
+  device:
+    model: "ISR4321"
+    os: "IOS-XE"
+    version: "16.09.04"
+  
+  # Basic interface configuration
+  interfaces:
+    - name: "GigabitEthernet0/0/0"
+      description: "WAN Interface"
+      ip: "203.0.113.1"
+      netmask: "255.255.255.252"
+      enabled: true
+    
+    - name: "GigabitEthernet0/0/1"
+      description: "LAN Interface"  
+      ip: "192.168.1.1"
+      netmask: "255.255.255.0"
+      enabled: true
+  
+  # Simple routing configuration
+  routing:
+    # Static default route
+    static-routes:
+      - destination: "0.0.0.0"
+        netmask: "0.0.0.0"
+        next-hop: "203.0.113.2"
+        description: "Default route to ISP"
+    
+    # OSPF for internal networks
+    ospf:
+      process-id: 1
+      router-id: "192.168.1.1"
+      networks:
+        - network: "192.168.1.0"
+          wildcard: "0.0.0.255"
+          area: 0
+  
+  # Basic security
+  security:
+    access-lists:
+      - name: "ALLOW_LAN"
+        type: "standard"
+        rules:
+          - action: "permit"
+            source: "192.168.1.0 0.0.0.255"
+          - action: "deny"
+            source: "any"
+    
+    ssh:
+      enabled: true
+      version: 2
+      timeout: 300
+  
+  # Basic monitoring
+  snmp:
+    enabled: true
+    community: "public"
+    location: "Example Location"
+    contact: "admin@example.com"
+  
+  logging:
+    enabled: true
+    level: "informational"
+    servers:
+      - "192.168.1.100"
