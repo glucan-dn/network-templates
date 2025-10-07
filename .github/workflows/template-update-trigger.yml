@@ -49,12 +49,7 @@ jobs:
         
         # Convert to JSON array format
         if [ -n "$CHANGED_FILES" ]; then
-          CHANGED_JSON=$(echo "$CHANGED_FILES" | python3 -c "
-import sys
-import json
-files = [line.strip() for line in sys.stdin if line.strip()]
-print(json.dumps(files))
-")
+          CHANGED_JSON=$(echo "$CHANGED_FILES" | python3 -c 'import sys, json; files = [line.strip() for line in sys.stdin if line.strip()]; print(json.dumps(files))')
         else
           CHANGED_JSON='[]'
         fi
