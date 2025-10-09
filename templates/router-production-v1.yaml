@@ -16,12 +16,12 @@ spec:
   interfaces:
     - name: "GigabitEthernet0/0/0"
       description: "WAN Interface"
-      ip: "192.168.3.3"
+      ip: "192.168.2.3"
       netmask: "255.255.255.0"
       enabled: true
     - name: "GigabitEthernet0/0/1" 
       description: "LAN Interface"
-      ip: "10.0.1.1"
+      ip: "10.0.2.2"
       netmask: "255.255.255.0"
       enabled: true
   
