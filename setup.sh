@@ -145,12 +145,6 @@ print_section "Next Steps"
 
 echo "Your network-templates repository is ready! 🎉"
 echo ""
-echo "1. ✅ Repository structure validated"
-echo "2. ✅ GitHub Actions workflow configured" 
-echo "3. ✅ Authentication tokens configured in config files"
-echo "4. ⏳ Start your API server (python test-api.py)"
-echo "5. ⏳ Test the complete workflow by changing templates"
-echo ""
 echo "For more details, see .github/workflows/template-update-trigger.yml"
 
 print_success "Setup complete!"
