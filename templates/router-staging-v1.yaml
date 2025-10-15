@@ -43,7 +43,7 @@ spec:
         type: "standard"
         rules:
           - action: "permit"
-            source: "10.100.0.0 0.0.255.255"
+            source: "12.100.0.0 0.0.255.255"
           - action: "permit"
             source: "192.168.100.0 0.0.0.255"
   
