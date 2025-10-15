@@ -58,7 +58,7 @@ spec:
   
   management:
     interface: "Vlan30"
-    ip: "10.0.30.10"
+    ip: "10.0.44.225"
     netmask: "255.255.255.0"
     gateway: "10.0.30.1"
   
