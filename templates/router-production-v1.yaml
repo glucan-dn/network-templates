@@ -17,7 +17,7 @@ spec:
     - name: "GigabitEthernet0/0/0"
       description: "WAN Interface"
       ip: "192.168.2.3"
-      netmask: "255.255.255.0"
+      netmask: "255.255.128.0"
       enabled: false
     - name: "GigabitEthernet0/0/1" 
       description: "LAN Interface"
