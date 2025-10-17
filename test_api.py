@@ -10,7 +10,8 @@ def health_check():
 def handle_template_update():
     # Verify authorization
     token = request.headers.get('Authorization', '').replace('Bearer ', '')
-    if token != 'secret-token':
+    expected_token = os.environ.get('API_TOKEN', 'secret-token')
+    if token != expected_token:
         return jsonify({'error': 'Unauthorized'}), 401
     
     # Process the payload
@@ -24,6 +25,21 @@ def handle_template_update():
     # etc.
     
     return jsonify({'status': 'success', 'message': 'Template update processed'})
+
+@app.route('/api/v1/start-config-update-on-devices', methods=['POST'])
+def handle_device_config_update():
+    # Process the payload
+    data = request.json
+    print(f"Starting config update on devices: {data['devices']}")
+    
+    # Your business logic here
+    # - Update CMS
+    # - Trigger workflows
+    # - Send notifications
+    # etc.
+    
+    return jsonify({'status': 'success', 'message': 'Device config update started'})
+
 
 if __name__ == '__main__':
     import os

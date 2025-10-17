@@ -1,0 +1,125 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: device-rollout
+  namespace: default
+  labels:
+    app: device-rollout
+spec:
+  replicas: 0  # No actual pods, just orchestrating device rollout
+  strategy:
+    canary:
+      steps:
+      # Step 1: First 20 devices (device-001 to device-020)
+      - setWeight: 0  # No actual traffic, just step progression
+      - analysis:
+          templates:
+          - templateName: device-api-notification
+          args:
+          - name: step-name
+            value: "step-1"
+          - name: device-count
+            value: "20"
+          - name: device-range-start
+            value: "1"
+          - name: device-range-end
+            value: "20"
+          - name: api-endpoint
+            value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+      - pause: {duration: 5s}
+      
+      # Step 2: Next 20 devices (device-021 to device-040)
+      - setWeight: 0
+      - analysis:
+          templates:
+          - templateName: device-api-notification
+          args:
+          - name: step-name
+            value: "step-2"
+          - name: device-count
+            value: "20"
+          - name: device-range-start
+            value: "21"
+          - name: device-range-end
+            value: "40"
+          - name: api-endpoint
+            value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+      - pause: {duration: 5s}
+      
+      # Step 3: Next 20 devices (device-041 to device-060)
+      - setWeight: 0
+      - analysis:
+          templates:
+          - templateName: device-api-notification
+          args:
+          - name: step-name
+            value: "step-3"
+          - name: device-count
+            value: "20"
+          - name: device-range-start
+            value: "41"
+          - name: device-range-end
+            value: "60"
+          - name: api-endpoint
+            value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+      - pause: {duration: 5s}
+      
+      # Step 4: Next 20 devices (device-061 to device-080)
+      - setWeight: 0
+      - analysis:
+          templates:
+          - templateName: device-api-notification
+          args:
+          - name: step-name
+            value: "step-4"
+          - name: device-count
+            value: "20"
+          - name: device-range-start
+            value: "61"
+          - name: device-range-end
+            value: "80"
+          - name: api-endpoint
+            value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+      - pause: {duration: 5s}
+      
+      # Step 5: Final 20 devices (device-081 to device-100)
+      - setWeight: 0
+      - analysis:
+          templates:
+          - templateName: device-api-notification
+          args:
+          - name: step-name
+            value: "step-5-final"
+          - name: device-count
+            value: "20"
+          - name: device-range-start
+            value: "81"
+          - name: device-range-end
+            value: "100"
+          - name: api-endpoint
+            value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+            
+  selector:
+    matchLabels:
+      app: device-rollout
+  template:
+    metadata:
+      labels:
+        app: device-rollout
+    spec:
+      containers:
+      - name: device-orchestrator
+        image: busybox:1.35
+        command: ["sleep", "3600"]  # Dummy container, since replicas=0 it won't run
+        env:
+        - name: ROLLOUT_TYPE
+          value: "device-rollout"
+        - name: TOTAL_DEVICES
+          value: "100"
+        resources:
+          requests:
+            memory: "16Mi"
+            cpu: "10m"
+          limits:
+            memory: "32Mi"
+            cpu: "50m"

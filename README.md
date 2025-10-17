@@ -1,75 +1,122 @@
-# Network Templates Repository
+# Argo Rollouts Test Repository
 
-This repository contains per-device configuration templates that trigger external API calls when updated.
+This repository contains simple test applications to demonstrate Argo Rollouts functionality.
 
 ## Structure
 
-- `templates/` - Device configuration templates organized by type and environment
-- `schemas/` - JSON schemas for template validation  
-- `examples/` - Example configurations and usage patterns
-- `api-config.yaml` - External API endpoint configuration
-- `deployment-config.yaml` - Template processing and notification configuration
-- `setup.sh` - Repository setup and validation script
-- `validate-templates.sh` - Local template validation script
+- `rollouts/` - Argo Rollouts manifests
+  - `test-app-canary.yaml` - Canary deployment strategy example
+  - `test-app-bluegreen.yaml` - Blue-Green deployment strategy example
+  - `analysis-templates.yaml` - Analysis templates for success rate and latency metrics  
+- `services/` - Service definitions for exposing the test applications
+- `configmaps/` - Simple test configuration maps
+- `deployments/` - Test secrets template (optional)
+- `deploy.sh` - Automated deployment script
 
-## Configuration
+## Quick Start
 
-### API Endpoint Configuration
-The external API endpoint is configured in `api-config.yaml`:
+### Prerequisites
 
-```yaml
-api:
-  base_url: "https://your-external-system.com"
-  endpoint: "/api/v1/network-templates/updated"
-  timeout: 30
+1. Kubernetes cluster with Argo Rollouts installed:
+   ```bash
+   kubectl create namespace argo-rollouts
+   kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+   ```
+
+2. Install Argo Rollouts CLI:
+   ```bash
+   # macOS
+   brew install argoproj/tap/kubectl-argo-rollouts
+   
+   # Linux
+   curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+   chmod +x ./kubectl-argo-rollouts-linux-amd64
+   sudo mv ./kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
+   ```
+
+### Deploy
+
+**One-command deployment**:
+```bash
+./deploy.sh
 ```
 
-### Authentication
-Both configuration files (`api-config.yaml` and `deployment-config.yaml`) use the same authentication:
-- **Bearer token** - Configured directly in the configuration files
+**Manual step-by-step**:
+```bash
+# 1. Deploy resources
+kubectl apply -f configmaps/
+kubectl apply -f services/
+kubectl apply -f deployments/
+kubectl apply -f rollouts/
 
-### Advantages
-✅ **Visible Configuration** - API endpoint visible in repository  
-✅ **Version Controlled** - Changes tracked in git  
-✅ **Developer Friendly** - No GitHub admin access needed  
-✅ **Environment Support** - Different URLs for prod/staging/dev  
-
-## Template Structure
-
-Templates follow this naming convention:
-- `{device-type}-{environment}-{version}.yaml`
-- Example: `router-production-v1.2.yaml`, `switch-staging-v2.1.yaml`
-
-## Integration Workflow
-
-When templates are updated, the system can trigger external API calls:
-1. **Template Change** → Detected by monitoring system
-2. **API Call** → Sends HTTP POST to configured endpoint
-3. **External System** → Processes notification (CMS, ITSM, etc.)
-
-## API Payload Format
-
-```json
-{
-  "event": "template_updated",
-  "repository": "your-org/network-templates",  
-  "changed_files": [
-    {
-      "path": "templates/router-production-v1.yaml",
-      "device_type": "router",
-      "environment": "production", 
-      "version": "1.0"
-    }
-  ]
-}
+# 2. Check status
+kubectl argo rollouts list
 ```
 
-## Setup
+## Test Applications
 
-1. **Configure API endpoints** in `api-config.yaml` and `deployment-config.yaml`
-2. **Validate templates** with `./validate-templates.sh`
-3. **Test setup** with `./setup.sh`
+### test-app (Canary Strategy)
+- **Image**: `nginx:1.20`
+- **Strategy**: Canary with 33% → 66% → 100% traffic shift
+- **Service**: `test-app` (ClusterIP)
 
-## Repository Independence
+### test-app-bg (Blue-Green Strategy)  
+- **Image**: `httpd:2.4`
+- **Strategy**: Blue-Green with analysis validation
+- **Services**: `test-app-bg-active` (LoadBalancer), `test-app-bg-preview` (ClusterIP)
 
-This repository is completely independent and can integrate with any external system that accepts HTTP webhooks.
+## Testing Rollout Strategies
+
+### 1. Watch Rollouts in Action
+```bash
+# Monitor canary rollout
+kubectl argo rollouts get rollout test-app --watch
+
+# Monitor blue-green rollout  
+kubectl argo rollouts get rollout test-app-bg --watch
+```
+
+### 2. Trigger Updates
+```bash
+# Update canary app
+kubectl argo rollouts set image test-app test-app=nginx:1.21
+
+# Update blue-green app
+kubectl argo rollouts set image test-app-bg test-app-bg=httpd:2.4.54
+```
+
+### 3. Manual Control
+```bash
+# Promote rollouts
+kubectl argo rollouts promote test-app
+kubectl argo rollouts promote test-app-bg
+
+# Abort rollouts
+kubectl argo rollouts abort test-app
+kubectl argo rollouts abort test-app-bg
+
+# Restart rollouts
+kubectl argo rollouts restart test-app
+kubectl argo rollouts restart test-app-bg
+```
+
+### 4. Check Application Status
+```bash
+# Get service endpoints
+kubectl get svc
+
+# Check pod status
+kubectl get pods
+
+# View rollout history
+kubectl argo rollouts history test-app
+kubectl argo rollouts history test-app-bg
+```
+
+## Analysis Templates
+
+Optional Prometheus-based analysis templates are included:
+- **Success Rate**: Monitors HTTP 2xx responses (≥95% required)
+- **Latency P95**: Monitors response time (≤500ms required)
+
+*Note: Requires Prometheus setup for analysis to work.*

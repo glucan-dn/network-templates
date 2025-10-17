@@ -1,0 +1,103 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: device-rollout-parameterized
+  namespace: default
+  labels:
+    app: device-rollout-parameterized
+spec:
+  replicas: 0  # No actual pods, just orchestrating device rollout
+  strategy:
+    canary:
+      steps:
+      # Step 1: First batch of devices
+      - setWeight: 0  # No actual traffic, just step progression
+      - analysis:
+          templates:
+          - templateName: device-api-notification-uuid
+          args:
+          - name: step-name
+            value: "step-1"
+          - name: device-list
+            value: ""  # Will be overridden at runtime
+          - name: api-endpoint
+            value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+      - pause: {duration: 5s}
+      
+      # Step 2: Second batch of devices  
+      - setWeight: 0
+      - analysis:
+          templates:
+          - templateName: device-api-notification-uuid
+          args:
+          - name: step-name
+            value: "step-2"
+          - name: device-list
+            value: ""  # Will be overridden at runtime
+          - name: api-endpoint
+            value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+      - pause: {duration: 5s}
+      
+      # Step 3: Third batch of devices
+      - setWeight: 0
+      - analysis:
+          templates:
+          - templateName: device-api-notification-uuid
+          args:
+          - name: step-name
+            value: "step-3"
+          - name: device-list
+            value: ""  # Will be overridden at runtime
+          - name: api-endpoint
+            value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+      - pause: {duration: 5s}
+      
+      # Step 4: Fourth batch of devices
+      - setWeight: 0
+      - analysis:
+          templates:
+          - templateName: device-api-notification-uuid
+          args:
+          - name: step-name
+            value: "step-4"
+          - name: device-list
+            value: ""  # Will be overridden at runtime
+          - name: api-endpoint
+            value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+      - pause: {duration: 5s}
+      
+      # Step 5: Final batch of devices
+      - setWeight: 0
+      - analysis:
+          templates:
+          - templateName: device-api-notification-uuid
+          args:
+          - name: step-name
+            value: "step-5-final"
+          - name: device-list
+            value: ""  # Will be overridden at runtime
+          - name: api-endpoint
+            value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+            
+  selector:
+    matchLabels:
+      app: device-rollout-parameterized
+  template:
+    metadata:
+      labels:
+        app: device-rollout-parameterized
+    spec:
+      containers:
+      - name: device-orchestrator
+        image: busybox:1.35
+        command: ["sleep", "3600"]  # Dummy container, since replicas=0 it won't run
+        env:
+        - name: ROLLOUT_TYPE
+          value: "device-rollout-parameterized"
+        resources:
+          requests:
+            memory: "16Mi"
+            cpu: "10m"
+          limits:
+            memory: "32Mi"
+            cpu: "50m"

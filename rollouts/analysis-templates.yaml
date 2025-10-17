@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  namespace: default
+spec:
+  args:
+  - name: service-name
+  metrics:
+  - name: success-rate
+    interval: 10s
+    successCondition: result[0] >= 0.95
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          sum(irate(
+            http_requests_total{job="{{args.service-name}}",status=~"2.."}[2m]
+          )) / 
+          sum(irate(
+            http_requests_total{job="{{args.service-name}}"}[2m]
+          ))
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: latency-p95
+  namespace: default
+spec:
+  args:
+  - name: service-name
+  metrics:
+  - name: latency-p95
+    interval: 10s
+    successCondition: result[0] <= 0.5
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          histogram_quantile(0.95, 
+            sum(rate(
+              http_request_duration_seconds_bucket{job="{{args.service-name}}"}[2m]
+            )) by (le)
+          )

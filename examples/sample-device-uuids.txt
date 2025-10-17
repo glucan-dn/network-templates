@@ -1,0 +1,32 @@
+# Sample Device UUIDs
+# Lines starting with # are ignored
+# One UUID per line
+# Replace these with your actual device UUIDs
+
+# Router devices
+f47ac10b-58cc-4372-a567-0e02b2c3d479
+6ba7b810-9dad-11d1-80b4-00c04fd430c8
+a3f5d621-8b29-41d4-9f8a-2c3e4d5f6789
+9b2c8d3e-4f5a-6b7c-8d9e-0f1a2b3c4d5e
+7e8f9a0b-1c2d-3e4f-5a6b-7c8d9e0f1a2b
+
+# Switch devices  
+123e4567-e89b-12d3-a456-426614174000
+987fcdeb-51a2-43d6-b789-123456789abc
+456789ab-cdef-1234-5678-9abcdef01234
+fedcba98-7654-3210-fedc-ba9876543210
+1a2b3c4d-5e6f-7890-abcd-ef1234567890
+
+# Access Point devices
+c9bf9e57-1685-4c89-bafb-ff5af830be8a
+550e8400-e29b-41d4-a716-446655440000
+8b3c8f9a-2d4e-5f6a-7b8c-9d0e1f2a3b4c
+4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f90
+6f7a8b9c-0d1e-2f3a-4b5c-6d7e8f901234
+
+# Firewall devices
+aabbccdd-eeff-1122-3344-556677889900
+11223344-5566-7788-99aa-bbccddeeff00
+ffeeddcc-bbaa-9988-7766-554433221100
+00112233-4455-6677-8899-aabbccddeeff
+99887766-5544-3322-1100-ffeeddccbbaa

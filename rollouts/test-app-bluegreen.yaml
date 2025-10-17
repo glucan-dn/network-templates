@@ -1,0 +1,59 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: test-app-bg
+  namespace: default
+  labels:
+    app: test-app-bg
+spec:
+  replicas: 2
+  strategy:
+    blueGreen:
+      activeService: test-app-bg-active
+      previewService: test-app-bg-preview
+      autoPromotionEnabled: true
+      scaleDownDelaySeconds: 15
+      # Optional: Enable analysis after setting up Prometheus
+      # prePromotionAnalysis:
+      #   templates:
+      #   - templateName: success-rate
+      #   args:
+      #   - name: service-name
+      #     value: test-app-bg-preview.default.svc.cluster.local
+  selector:
+    matchLabels:
+      app: test-app-bg
+  template:
+    metadata:
+      labels:
+        app: test-app-bg
+    spec:
+      containers:
+      - name: test-app-bg
+        image: httpd:2.4
+        ports:
+        - containerPort: 80
+        env:
+        - name: VERSION
+          value: "v1.0.0"
+        - name: STRATEGY
+          value: "blue-green"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"

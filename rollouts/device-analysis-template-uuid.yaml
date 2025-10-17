@@ -1,0 +1,219 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: device-api-notification-uuid
+  namespace: default
+spec:
+  args:
+  - name: step-name
+  - name: device-list
+    # Expects comma-separated UUID list like: "uuid1,uuid2,uuid3"
+  - name: api-endpoint
+    value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+  metrics:
+  - name: device-notification-uuid
+    interval: 5s
+    count: 1  # Run exactly once per step
+    successCondition: result == "success"
+    failureLimit: 0
+    provider:
+      job:
+        spec:
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: api-notifier
+                image: curlimages/curl:8.1.0
+                command: ["/bin/sh"]
+                args:
+                - -c
+                - |
+                  # Parse device UUIDs from the parameter
+                  DEVICE_LIST_PARAM="{{args.device-list}}"
+                  
+                  # Check if device list is provided
+                  if [ -z "$DEVICE_LIST_PARAM" ] || [ "$DEVICE_LIST_PARAM" = "null" ]; then
+                    echo "ERROR: No device list provided. Use device-list parameter with comma-separated UUIDs."
+                    exit 1
+                  fi
+                  
+                  # Convert comma-separated UUIDs to JSON array format
+                  DEVICE_JSON_ARRAY=""
+                  
+                  # Use portable sh-compatible approach
+                  echo "$DEVICE_LIST_PARAM" | tr ',' '\n' | while read DEVICE_UUID; do
+                    # Trim whitespace
+                    DEVICE_UUID=$(echo "$DEVICE_UUID" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                    
+                    # Skip empty lines
+                    if [ -z "$DEVICE_UUID" ]; then
+                      continue
+                    fi
+                    
+                    # Validate UUID format (basic check)
+                    if ! echo "$DEVICE_UUID" | grep -qE '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'; then
+                      echo "WARNING: '$DEVICE_UUID' doesn't look like a valid UUID format"
+                    fi
+                    
+                    if [ -z "$DEVICE_JSON_ARRAY" ]; then
+                      DEVICE_JSON_ARRAY="\"$DEVICE_UUID\""
+                    else
+                      DEVICE_JSON_ARRAY="$DEVICE_JSON_ARRAY,\"$DEVICE_UUID\""
+                    fi
+                  done
+                  
+                  # Handle the subshell issue by rebuilding the array
+                  DEVICE_JSON_ARRAY=""
+                  for DEVICE_UUID in $(echo "$DEVICE_LIST_PARAM" | tr ',' ' '); do
+                    # Trim whitespace
+                    DEVICE_UUID=$(echo "$DEVICE_UUID" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                    
+                    if [ -z "$DEVICE_JSON_ARRAY" ]; then
+                      DEVICE_JSON_ARRAY="\"$DEVICE_UUID\""
+                    else
+                      DEVICE_JSON_ARRAY="$DEVICE_JSON_ARRAY,\"$DEVICE_UUID\""
+                    fi
+                  done
+                  
+                  # Count devices
+                  DEVICE_COUNT=$(echo "$DEVICE_LIST_PARAM" | tr ',' '\n' | wc -l)
+                  
+                  # Create JSON payload in the exact format required
+                  JSON_PAYLOAD="{\"devices\":[$DEVICE_JSON_ARRAY]}"
+                  
+                  echo "Sending notification for step {{args.step-name}} with $DEVICE_COUNT devices..."
+                  echo "Device UUIDs: $DEVICE_LIST_PARAM"
+                  echo "JSON Payload: $JSON_PAYLOAD"
+                  
+                  # Make API call exactly as specified
+                  RESPONSE=$(curl -s -w "%{http_code}" --location \
+                    -H "Content-Type: application/json" \
+                    -d "$JSON_PAYLOAD" \
+                    {{args.api-endpoint}})
+                  
+                  HTTP_CODE="${RESPONSE: -3}"
+                  RESPONSE_BODY="${RESPONSE%???}"
+                  
+                  echo "HTTP Status: $HTTP_CODE"
+                  echo "Response: $RESPONSE_BODY"
+                  
+                  # Check if request was successful
+                  if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+                    echo "success"
+                  else
+                    echo "API call failed with status $HTTP_CODE"
+                    exit 1
+                  fi
+                env:
+                - name: STEP_NAME
+                  value: "{{args.step-name}}"
+                - name: DEVICE_LIST
+                  value: "{{args.device-list}}"
+                resources:
+                  requests:
+                    memory: "32Mi"
+                    cpu: "50m"
+                  limits:
+                    memory: "128Mi"
+                    cpu: "200m"
+
+---
+# Alternative template using ConfigMap for device lists
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: device-api-notification-configmap
+  namespace: default
+spec:
+  args:
+  - name: step-name
+  - name: configmap-name
+    value: "device-list-uuid"
+  - name: step-key
+    # Key in the ConfigMap for this step's devices (e.g., "step-1", "step-2")
+  - name: api-endpoint
+    value: "https://discerning-surprise-production.up.railway.app/api/v1/start-config-update-on-devices"
+  metrics:
+  - name: device-notification-configmap
+    interval: 5s
+    count: 1
+    successCondition: result == "success"
+    failureLimit: 0
+    provider:
+      job:
+        spec:
+          template:
+            spec:
+              restartPolicy: Never
+              containers:
+              - name: api-notifier
+                image: curlimages/curl:8.1.0
+                command: ["/bin/sh"]
+                args:
+                - -c
+                - |
+                  # Read device list from mounted ConfigMap
+                  STEP_KEY="{{args.step-key}}"
+                  CONFIG_FILE="/config/$STEP_KEY"
+                  
+                  if [ ! -f "$CONFIG_FILE" ]; then
+                    echo "ERROR: ConfigMap key '$STEP_KEY' not found in /config/"
+                    ls -la /config/
+                    exit 1
+                  fi
+                  
+                  # Read the device list (expecting comma-separated UUIDs)
+                  DEVICE_LIST=$(cat "$CONFIG_FILE")
+                  echo "Read device list from ConfigMap: $DEVICE_LIST"
+                  
+                  # Convert to JSON array
+                  DEVICE_JSON_ARRAY=""
+                  
+                  for DEVICE_UUID in $(echo "$DEVICE_LIST" | tr ',' ' '); do
+                    DEVICE_UUID=$(echo "$DEVICE_UUID" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                    
+                    if [ -z "$DEVICE_JSON_ARRAY" ]; then
+                      DEVICE_JSON_ARRAY="\"$DEVICE_UUID\""
+                    else
+                      DEVICE_JSON_ARRAY="$DEVICE_JSON_ARRAY,\"$DEVICE_UUID\""
+                    fi
+                  done
+                  
+                  JSON_PAYLOAD="{\"devices\":[$DEVICE_JSON_ARRAY]}"
+                  
+                  echo "Sending notification for step {{args.step-name}}..."
+                  echo "JSON Payload: $JSON_PAYLOAD"
+                  
+                  # Make API call
+                  RESPONSE=$(curl -s -w "%{http_code}" --location \
+                    -H "Content-Type: application/json" \
+                    -d "$JSON_PAYLOAD" \
+                    {{args.api-endpoint}})
+                  
+                  HTTP_CODE="${RESPONSE: -3}"
+                  RESPONSE_BODY="${RESPONSE%???}"
+                  
+                  echo "HTTP Status: $HTTP_CODE"
+                  echo "Response: $RESPONSE_BODY"
+                  
+                  if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+                    echo "success"
+                  else
+                    echo "API call failed with status $HTTP_CODE"
+                    exit 1
+                  fi
+                volumeMounts:
+                - name: device-config
+                  mountPath: /config
+                resources:
+                  requests:
+                    memory: "32Mi"
+                    cpu: "50m"
+                  limits:
+                    memory: "128Mi"
+                    cpu: "200m"
+              volumes:
+              - name: device-config
+                configMap:
+                  name: "{{args.configmap-name}}"
